@@ -388,17 +388,20 @@
             transition: background 0.3s ease;
         }
 
-        /* Fix header alignment */
+        /* Favorite Column (1st) */
         #dataTable th:first-child { 
             border-radius: 0; 
-            width: 40px; 
-            text-align: center; 
-            padding: 1rem 0 1rem 1rem; /* Tighten right padding */
+            width: 50px; 
+            text-align: right; /* Align header right */
+            padding: 1rem 0 1rem 1rem; /* No right padding */
         }
+        
+        /* Name Column (2nd) */
         #dataTable th:nth-child(2) { 
             border-radius: 0.5rem 0 0 0.5rem; 
-            padding-left: 0.25rem; /* Tighten left padding */
+            padding-left: 0.25rem; /* Small gap for header text */
         }
+        
         #dataTable th:last-child { border-radius: 0 0.5rem 0.5rem 0; }
 
         #dataTable td {
@@ -417,18 +420,20 @@
         #dataTable tbody tr:last-child td { border-bottom: none; }
 
         /* FIX: Tighten Favorite Button and Name Columns */
+        /* 1. Favorite Column: Align Right, No Right Padding */
         #dataTable td:first-child { 
-            text-align: center; 
-            padding: 0.5rem 0 0.5rem 0.5rem; /* Remove right padding */
+            text-align: right; 
+            padding: 0.5rem 0 0.5rem 0.5rem; /* Right padding is 0 */
+            width: 50px;
         }
 
-        #dataTable th:nth-child(2),
+        /* 2. Name Column: Shrink to fit, minimal left padding */
         #dataTable td:nth-child(2) {
             width: 1%;           
             white-space: nowrap; 
             font-weight: 700;
             color: var(--accent);
-            padding-left: 0.25rem; /* Reduce left padding to bring text closer to fav button */
+            padding-left: 0.125rem; /* Very small gap between button and text */
         }
 
         /* Image Column */
@@ -442,7 +447,7 @@
             padding: 0.25rem;
             color: var(--fg-muted);
             transition: all 0.2s ease;
-            display: flex;
+            display: inline-flex; /* Use inline-flex to behave like text/image */
             align-items: center;
             justify-content: center;
             border-radius: 50%;
