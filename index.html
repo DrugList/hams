@@ -418,15 +418,22 @@
             padding: 0.5rem;
         }
 
-        /* Name Column */
+        /* Name Column - Shrink to fit longest name */
+        #dataTable th:nth-child(2),
         #dataTable td:nth-child(2) {
+            width: 1%;
             white-space: nowrap; 
             font-weight: 700;
             color: var(--accent);
         }
 
-        /* Image Column */
-        #dataTable td:nth-child(3) { width: 90px; white-space: nowrap; padding-left: 5px; }
+        /* Image Column - Fixed width */
+        #dataTable th:nth-child(3),
+        #dataTable td:nth-child(3) {
+            width: 90px; 
+            white-space: nowrap;
+            padding-left: 5px;
+        }
 
         /* Favorite Button - match referenced exactly */
         .fav-btn {
@@ -624,10 +631,13 @@
             .download-group { justify-content: center; margin-top: 0.5rem; margin-left: 0; }
 
             .table-img { width: 60px; height: 60px; }
-            #dataTable td:nth-child(3), #dataTable th:nth-child(3) { width: 70px !important; }
 
             /* Allow name to wrap on mobile if needed */
-            #dataTable td:nth-child(2), #dataTable th:nth-child(2) { white-space: normal; }
+            #dataTable th:nth-child(2),
+            #dataTable td:nth-child(2) { 
+                white-space: normal; 
+                width: auto;
+            }
 
             .scroll-hint { display: block; }
             .cards-container { grid-template-columns: 1fr; padding: 1rem; }
