@@ -388,17 +388,16 @@
             transition: background 0.3s ease;
         }
 
-        /* Favorite Column (1st) - Shrink to Fit Content */
+        /* Favorite Column Header - Match referenced style */
         #dataTable th:first-child { 
-            border-radius: 0; 
-            width: 1%; /* Forces shrink-to-fit width */
-            text-align: right;
-            padding: 1rem 0 1rem 0.5rem;
+            border-radius: 0.5rem 0 0 0.5rem;
+            width: auto;
+            text-align: center;
+            padding: 1rem 0.75rem;
         }
         
         /* Name Column (2nd) */
         #dataTable th:nth-child(2) { 
-            border-radius: 0.5rem 0 0 0.5rem; 
             padding-left: 0.25rem;
         }
         
@@ -419,11 +418,10 @@
         #dataTable tbody tr:hover { background: var(--accent-glow); }
         #dataTable tbody tr:last-child td { border-bottom: none; }
 
-        /* FIX: Tighten Favorite Button Column */
+        /* Favorite Column - Match referenced style */
         #dataTable td:first-child { 
-            text-align: right; 
-            padding: 0.5rem 0 0.5rem 0.5rem; /* Minimal padding */
-            width: 1%; /* Forces shrink-to-fit width */
+            font-weight: 600;
+            color: var(--accent);
         }
 
         /* Name Column: Shrink to fit */
@@ -438,7 +436,7 @@
         /* Image Column */
         #dataTable td:nth-child(3) { width: 90px; white-space: nowrap; padding-left: 5px; }
 
-        /* Favorite Button */
+        /* Favorite Button - Match referenced style exactly */
         .fav-btn {
             background: none;
             border: none;
@@ -446,13 +444,12 @@
             padding: 0.25rem;
             color: var(--fg-muted);
             transition: all 0.2s ease;
-            display: inline-flex;
+            display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
         }
 
-        .fav-btn:hover { transform: scale(1.2); background: var(--accent-glow); }
+        .fav-btn:hover { transform: scale(1.2); }
         .fav-btn.active { color: var(--heart); }
         .fav-btn .material-icons { font-size: 1.375rem; }
 
