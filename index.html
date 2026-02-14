@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#d32f2f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>High Alert Medications</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        :root {
+            --bg: #f4f4f9;
+            --bg-elevated: #ffffff;
+            --bg-card: #ffffff;
+            --fg: #1a1a2e;
+            --fg-muted: #6b7280;
+            --accent: #d32f2f;
+            --accent-hover: #b71c1c;
+            --accent-glow: rgba(211, 47, 47, 0.2);
+            --secondary: #1976d2;
+            --secondary-hover: #1565c0;
+            --border: #e5e7eb;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --danger: #ef4444;
+            --heart: #f43f5e;
+            --text-xs: 0.75rem;
+            --text-sm: 0.875rem;
+            --text-base: 1rem;
+            --text-lg: 1.125rem;
+            --text-xl: 1.25rem;
+        }
+
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --bg-elevated: #1e293b;
+            --bg-card: #1e293b;
+            --fg: #f1f5f9;
+            --fg-muted: #94a3b8;
+            --accent: #f87171;
+            --accent-hover: #fca5a5;
+            --accent-glow: rgba(248, 113, 113, 0.2);
+            --secondary: #60a5fa;
+            --secondary-hover: #93c5fd;
+            --border: #334155;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
+            font-size: var(--text-base);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Pull to Refresh Indicator */
+        .pull-indicator {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(-60px);
+            background: var(--accent);
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 0 0 1.25rem 1.25rem;
+            font-size: var(--text-sm);
+            font-weight: 600;
+            z-index: 1001;
+            transition: transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px var(--accent-glow);
+        }
+
+        .pull-indicator.visible {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .pull-indicator .material-icons {
+            font-size: 1.125rem;
+        }
+
+        /* Header Styling */
+        .app-header {
+            background: linear-gradient(180deg, var(--accent) 0%, var(--accent-hover) 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 20px var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: background 0.3s ease;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+            gap: 1rem;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 2.75rem;
+            height: 2.75rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .logo-icon .material-icons {
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .title-block {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+        }
+
+        .page-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 0.25rem;
+            flex-wrap: wrap;
+        }
+
+        #pageDate {
+            font-size: var(--text-sm);
+            opacity: 0.9;
+        }
+
+        .freshness-badge {
+            font-size: var(--text-xs);
+            padding: 0.1875rem 0.5rem;
+            border-radius: 0.375rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .freshness-badge.fresh {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: rgba(76, 175, 80, 0.5);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .header-btn {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 0.5rem 0.875rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: var(--text-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: inherit;
+            line-height: 1;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .header-btn.active {
+            background: white;
+            color: var(--accent);
+        }
+
+        .header-btn-icon {
+            padding: 0.5rem;
+            min-width: 2.25rem;
+            justify-content: center;
+        }
+
+        .header-btn .material-icons {
+            font-size: 1.125rem;
+        }
+
+        .spin .material-icons {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .main-content {
+            background: var(--bg-card);
+            box-shadow: 0 0 20px var(--shadow);
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Definition Box Styling */
+        .definition-box {
+            background: linear-gradient(135deg, rgba(211, 47, 47, 0.08) 0%, rgba(25, 118, 210, 0.05) 100%);
+            border-left: 4px solid var(--accent);
+            padding: 1rem 1.25rem;
+            margin: 1.25rem;
+            border-radius: 0.5rem;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .definition-box.visible {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .definition-box p {
+            font-size: var(--text-sm);
+            line-height: 1.7;
+            color: var(--fg);
+        }
+
+        /* Control Row Layout */
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0 1.25rem 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .search-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+            max-width: 400px;
+        }
+
+        .search-wrapper .material-icons {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--fg-muted);
+            font-size: 1.25rem;
+            pointer-events: none;
+            transition: color 0.3s ease;
+        }
+
+        .custom-search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            font-size: var(--text-base);
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 0.75rem;
+            color: var(--fg);
+            transition: all 0.2s ease;
+            font-family: inherit;
+            line-height: 1;
+        }
+
+        .custom-search-input::placeholder {
+            color: var(--fg-muted);
+        }
+
+        .custom-search-input:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .view-toggles {
+            display: flex;
+            gap: 0.25rem;
+            background: var(--bg);
+            padding: 0.25rem;
+            border-radius: 0.625rem;
+            border: 1px solid var(--border);
+        }
+
+        .view-btn {
+            padding: 0.5rem 0.75rem;
+            background: transparent;
+            border: none;
+            color: var(--fg-muted);
+            cursor: pointer;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: var(--text-sm);
+            font-weight: 500;
+            font-family: inherit;
+            line-height: 1;
+        }
+
+        .view-btn:hover {
+            color: var(--fg);
+        }
+
+        .view-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .view-btn .material-icons {
+            font-size: 1.125rem;
+        }
+
+        .download-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .download-label {
+            font-size: var(--text-sm);
+            color: var(--fg-muted);
+            font-weight: 600;
+        }
+
+        /* Loading State */
+        .loading-state {
+            text-align: center;
+            padding: 3rem 1.25rem;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        .loading-state p {
+            color: var(--fg-muted);
+            font-size: var(--text-base);
+        }
+
+        /* Error State */
+        .error-state {
+            text-align: center;
+            padding: 3rem 1.25rem;
+            margin: 1.25rem;
+            background: var(--bg);
+            border: 1px solid var(--danger);
+            border-radius: 0.75rem;
+        }
+
+        .error-state .material-icons {
+            font-size: 3rem;
+            color: var(--danger);
+            margin-bottom: 1rem;
+        }
+
+        .error-state h3 {
+            margin: 0 0 0.5rem;
+            color: var(--fg);
+            font-size: var(--text-lg);
+        }
+
+        .error-state p {
+            margin: 0;
+            color: var(--fg-muted);
+            font-size: var(--text-sm);
+        }
+
+        /* Table Container */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .scroll-hint {
+            display: none;
+            padding: 0.75rem 1rem;
+            background: var(--accent-glow);
+            border-bottom: 1px solid var(--border);
+            font-size: var(--text-sm);
+            color: var(--fg-muted);
+            text-align: center;
+        }
+
+        .scroll-hint .material-icons {
+            font-size: 1rem;
+            vertical-align: middle;
+            margin-right: 0.375rem;
+            animation: swipeHint 1.5s ease-in-out infinite;
+        }
+
+        @keyframes swipeHint {
+            0%, 100% { transform: translateX(-4px); }
+            50% { transform: translateX(4px); }
+        }
+
+        /* --- CARD STYLE TABLE --- */
+        #dataTable {
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+
+        #dataTable th {
+            background: var(--secondary);
+            color: white;
+            text-align: left;
+            padding: 1rem 0.875rem;
+            font-weight: 600;
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: none;
+            white-space: nowrap;
+            transition: background 0.3s ease;
+        }
+
+        #dataTable th:first-child {
+            border-radius: 0;
+            width: 40px;
+            text-align: center;
+        }
+
+        #dataTable th:nth-child(2) {
+            border-radius: 0.5rem 0 0 0.5rem;
+        }
+
+        #dataTable th:last-child {
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        #dataTable td {
+            padding: 1rem 0.875rem;
+            vertical-align: middle;
+            line-height: 1.6;
+            background: transparent;
+            border-bottom: 1px solid var(--border);
+            font-size: var(--text-sm);
+            color: var(--fg);
+            transition: border-color 0.3s ease;
+        }
+
+        #dataTable tbody tr {
+            transition: background 0.15s ease;
+        }
+
+        #dataTable tbody tr:hover {
+            background: var(--accent-glow);
+        }
+
+        #dataTable tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        #dataTable td:first-child {
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        #dataTable td:nth-child(2) {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        #dataTable td:nth-child(3) {
+            width: 90px;
+            white-space: nowrap;
+            padding-left: 5px;
+        }
+
+        /* Favorite Button */
+        .fav-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+            color: var(--fg-muted);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .fav-btn:hover {
+            transform: scale(1.2);
+            background: var(--accent-glow);
+        }
+
+        .fav-btn.active {
+            color: var(--heart);
+        }
+
+        .fav-btn .material-icons {
+            font-size: 1.375rem;
+        }
+
+        /* Image Styling */
+        .table-img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            border: 2px solid var(--border);
+            transition: all 0.2s ease;
+            background: var(--bg);
+        }
+
+        .table-img:hover {
+            transform: scale(1.08);
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .no-image, .img-error {
+            color: var(--fg-muted);
+            font-style: italic;
+            font-size: var(--text-sm);
+        }
+
+        .img-error {
+            color: var(--danger);
+        }
+
+        /* Cards View */
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            padding: 1.25rem;
+        }
+
+        .med-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .med-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 8px 24px var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, var(--accent-glow) 0%, transparent 100%);
+        }
+
+        .card-img {
+            width: 5rem;
+            height: 5rem;
+            object-fit: cover;
+            border-radius: 0.625rem;
+            border: 2px solid var(--border);
+            flex-shrink: 0;
+            background: var(--bg-card);
+        }
+
+        .card-title-section {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .card-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: var(--text-base);
+            font-weight: 700;
+            color: var(--accent);
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .card-fav-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+            color: var(--fg-muted);
+            transition: all 0.2s ease;
+            border-radius: 50%;
+        }
+
+        .card-fav-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .card-fav-btn.active {
+            color: var(--heart);
+        }
+
+        .card-fav-btn .material-icons {
+            font-size: 1.5rem;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .card-field {
+            margin-bottom: 0.75rem;
+        }
+
+        .card-field:last-child {
+            margin-bottom: 0;
+        }
+
+        .card-field-label {
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--fg-muted);
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+
+        .card-field-value {
+            font-size: var(--text-sm);
+            color: var(--fg);
+            line-height: 1.5;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            padding: 1.25rem;
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: zoomIn 0.3s ease;
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.25rem;
+            right: 1.25rem;
+            width: 3rem;
+            height: 3rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        /* Rich Text Styles */
+        .rt-align-left { text-align: left; }
+        .rt-align-center { text-align: center; }
+        .rt-align-right { text-align: right; }
+        .rt-align-justify { text-align: justify; }
+        .bold-text { font-weight: 700; }
+
+        .dataTables_empty {
+            text-align: center;
+            padding: 2rem 1.25rem;
+            color: var(--fg-muted);
+            font-size: var(--text-base);
+        }
+
+        /* Print Styles */
+        @media print {
+            html { font-size: 12pt; }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .app-header {
+                background: #d32f2f !important;
+                box-shadow: none;
+                position: relative;
+            }
+            .header-actions, .view-toggles, .fav-btn, .header-btn, .cards-container, .scroll-hint {
+                display: none !important;
+            }
+            .container { padding: 0; max-width: none; }
+            .main-content {
+                border: none;
+                box-shadow: none;
+                border-radius: 0;
+            }
+            #dataTable th, #dataTable td {
+                border: 1px solid #ccc;
+                padding: 0.5rem;
+                color: black;
+                font-size: 10pt;
+            }
+            #dataTable th { background: #f0f0f0 !important; }
+            #dataTable th:first-child { display: none; }
+            #dataTable td:first-child { display: none; }
+            .table-img { width: 50px; height: 50px; }
+            .page-meta { display: none; }
+        }
+
+        /* --- RESPONSIVE FIX FOR MOBILE DEVICES --- */
+        @media (max-width: 768px) {
+            .app-header { padding: 0.75rem 1rem; }
+            .header-top { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+            .header-actions { width: 100%; justify-content: flex-start; }
+
+            .container { padding: 1rem; }
+
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+                margin: 0 1rem 1rem;
+            }
+
+            .search-wrapper { max-width: none; }
+            .view-toggles { justify-content: center; }
+            .download-group { justify-content: center; margin-top: 0.5rem; }
+
+            .table-img { width: 60px; height: 60px; }
+            #dataTable td:nth-child(3), #dataTable th:nth-child(3) { width: 70px !important; }
+
+            #dataTable td:nth-child(2), #dataTable th:nth-child(2) {
+                white-space: normal !important;
+            }
+
+            .scroll-hint { display: block; }
+
+            .cards-container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+        }
+
+        /* Small phones */
+        @media (max-width: 375px) {
+            html { font-size: 14px; }
+            .header-btn { padding: 0.5rem 0.625rem; font-size: 0.8125rem; }
+            .app-header h1 { font-size: 1rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="pull-indicator" id="pullIndicator">
+    <span class="material-icons">refresh</span>
+    <span>Release to refresh</span>
+</div>
+
+<div class="app-header">
+    <div class="header-top">
+        <div class="header-content">
+            <div class="logo-icon">
+                <span class="material-icons">medication</span>
+            </div>
+            <div class="title-block">
+                <h1 id="pageTitle">HIGH ALERT MEDICATIONS</h1>
+                <div class="page-meta">
+                    <span id="pageDate"></span>
+                    <span class="freshness-badge" id="freshnessBadge">Loading...</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn header-btn-icon" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark/light mode">
+                <span class="material-icons" id="themeIcon">dark_mode</span>
+            </button>
+            <button class="header-btn header-btn-icon" id="favFilterBtn" onclick="toggleFavoritesFilter()" title="Show favorites only">
+                <span class="material-icons">favorite_border</span>
+            </button>
+            <button id="refreshBtn" class="header-btn" onclick="forceRefresh()">
+                <span class="material-icons">refresh</span>
+                <span>Refresh</span>
+            </button>
+            <a id="pdfButton" href="#" target="_blank" class="header-btn" style="display: none;">
+                <span class="material-icons">picture_as_pdf</span>
+                PDF
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="main-content">
+        <div id="pageDefinition" class="definition-box"></div>
+
+        <div class="control-row">
+            <div class="search-wrapper">
+                <span class="material-icons">search</span>
+                <input type="text" id="customSearch" class="custom-search-input" placeholder="Search medication name...">
+            </div>
+
+            <div class="view-toggles">
+                <button class="view-btn active" data-view="table" onclick="switchView('table')">
+                    <span class="material-icons">table_rows</span>
+                    Table
+                </button>
+                <button class="view-btn" data-view="cards" onclick="switchView('cards')">
+                    <span class="material-icons">grid_view</span>
+                    Cards
+                </button>
+            </div>
+
+            <div class="download-group">
+                <span class="download-label">Muat turun:</span>
+                <a id="pdfButtonAlt" href="#" target="_blank" class="header-btn" style="display: none;">
+                    <span class="material-icons">picture_as_pdf</span>
+                    PDF
+                </a>
+            </div>
+        </div>
+
+        <div id="loadingState" class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Loading medication data...</p>
+        </div>
+
+        <div id="errorState" class="error-state" style="display: none;">
+            <span class="material-icons">error_outline</span>
+            <h3>Failed to Load Data</h3>
+            <p>Please check your connection and try again.</p>
+        </div>
+
+        <div id="tableContainer" class="table-container" style="display: none;">
+            <div class="scroll-hint">
+                <span class="material-icons">swipe</span>
+                Scroll left/right to see more columns
+            </div>
+            <table id="dataTable">
+                <thead></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div id="cardsContainer" class="cards-container" style="display: none;"></div>
+    </div>
+</div>
+
+<div id="imgModal" class="modal" onclick="closeModal()">
+    <button class="modal-close" aria-label="Close modal">
+        <span class="material-icons">close</span>
+    </button>
+    <img class="modal-content" id="modalImg" alt="Medication image enlarged">
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+<script>
+    // --- CONFIG ---
+    const SHEET_ID = '1J0kxAA9hRf0kGI4SnUUPr_R7Y1PCGXEMBabkxTcSE8M';
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+
+    const CACHE_KEY = 'medAppCache_v10';
+    const CONFIG_COLUMNS = ['CONFIG_TITLE', 'CONFIG_PDF', 'CONFIG_DATE', 'CONFIG_DEFINITION'];
+    const FAVORITES_KEY = 'medApp_favorites';
+    const THEME_KEY = 'medApp_theme';
+
+    let dataTable;
+    let currentView = 'table';
+    let favorites = new Set();
+    let showFavoritesOnly = false;
+    let lastRefreshTime = null;
+
+    // --- INITIALIZATION ---
+    function init() {
+        loadTheme();
+        loadFavorites();
+        fetchSheetData();
+        setupPullToRefresh();
+        setupAutoRefresh();
+        setupKeyboardShortcuts();
+    }
+
+    // --- THEME SYSTEM ---
+    function loadTheme() {
+        const saved = localStorage.getItem(THEME_KEY);
+        if (saved === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeIcon').textContent = 'light_mode';
+        }
+    }
+
+    function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme');
+        const newTheme = current === 'dark' ? 'light' : 'dark';
+
+        if (newTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('themeIcon').textContent = 'light_mode';
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            document.getElementById('themeIcon').textContent = 'dark_mode';
+        }
+
+        localStorage.setItem(THEME_KEY, newTheme);
+    }
+
+    // --- FAVORITES SYSTEM ---
+    function loadFavorites() {
+        try {
+            const saved = localStorage.getItem(FAVORITES_KEY);
+            if (saved) favorites = new Set(JSON.parse(saved));
+        } catch (e) {
+            favorites = new Set();
+        }
+    }
+
+    function saveFavorites() {
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favorites]));
+    }
+
+    function toggleFavorite(medName) {
+        if (favorites.has(medName)) {
+            favorites.delete(medName);
+        } else {
+            favorites.add(medName);
+        }
+        saveFavorites();
+        updateFavoriteButtons();
+
+        if (showFavoritesOnly) {
+            renderView();
+        }
+    }
+
+    function toggleFavoritesFilter() {
+        showFavoritesOnly = !showFavoritesOnly;
+        const btn = document.getElementById('favFilterBtn');
+
+        if (showFavoritesOnly) {
+            btn.classList.add('active');
+            btn.querySelector('.material-icons').textContent = 'favorite';
+        } else {
+            btn.classList.remove('active');
+            btn.querySelector('.material-icons').textContent = 'favorite_border';
+        }
+
+        renderView();
+    }
+
+    function updateFavoriteButtons() {
+        document.querySelectorAll('.fav-btn, .card-fav-btn').forEach(btn => {
+            const name = btn.dataset.name;
+            const isFav = favorites.has(name);
+            btn.classList.toggle('active', isFav);
+            const icon = btn.querySelector('.material-icons');
+            if (icon) icon.textContent = isFav ? 'favorite' : 'favorite_border';
+        });
+    }
+
+    // --- DATA FRESHNESS ---
+    function updateFreshness() {
+        const badge = document.getElementById('freshnessBadge');
+        if (!lastRefreshTime) {
+            badge.textContent = 'No data';
+            badge.classList.remove('fresh');
+            return;
+        }
+        const mins = Math.floor((Date.now() - lastRefreshTime) / 60000);
+        if (mins < 1) {
+            badge.textContent = 'Just now';
+            badge.classList.add('fresh');
+        } else if (mins < 60) {
+            badge.textContent = `${mins}m ago`;
+            badge.classList.add('fresh');
+        } else {
+            badge.textContent = `${Math.floor(mins / 60)}h ago`;
+            badge.classList.remove('fresh');
+        }
+    }
+
+    // --- IMAGE URL PARSER ---
+    function getImageUrl(rawUrl) {
+        if (!rawUrl || !rawUrl.trim()) return null;
+        let url = rawUrl.trim();
+        let id = null;
+
+        let match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (match) id = match[1];
+        if (!id) { match = url.match(/id=([a-zA-Z0-9_-]+)/); if (match) id = match[1]; }
+
+        if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w1000`;
+        if (url.match(/\.(jpeg|jpg|gif|png|webp)$/i)) return url;
+        return null;
+    }
+
+    function getPdfViewUrl(rawUrl) {
+        if (!rawUrl || !rawUrl.trim()) return null;
+        let url = rawUrl.trim();
+        let id = null;
+        let match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (match) id = match[1];
+        if (!id) { match = url.match(/id=([a-zA-Z0-9_-]+)/); if (match) id = match[1]; }
+        if (id) return `https://drive.google.com/file/d/${id}/view`;
+        return url;
+    }
+
+    // --- RICH TEXT PARSER ---
+    function parseRichText(text) {
+        if (!text) return '';
+        let result = text.toString();
+
+        // Escape HTML
+        result = result.replace(/&/g, '&amp;')
+                       .replace(/</g, '&lt;')
+                       .replace(/>/g, '&gt;')
+                       .replace(/"/g, '&quot;');
+
+        // Restore allowed HTML tags
+        result = result.replace(/&lt;b&gt;/gi, '<b>')
+                       .replace(/&lt;\/b&gt;/gi, '</b>')
+                       .replace(/&lt;strong&gt;/gi, '<strong>')
+                       .replace(/&lt;\/strong&gt;/gi, '</strong>')
+                       .replace(/&lt;br\s*\/?&gt;/gi, '<br>');
+
+        // Parse line breaks
+        result = result.replace(/\n/g, '<br>');
+
+        // Parse alignment tags
+        result = result.replace(/\[(left|center|right|justify)\]([\s\S]*?)\[\/\1\]/gi, function(match, align, content) {
+            return `<div class="rt-align-${align.toLowerCase()}">${content}</div>`;
+        });
+
+        // Parse color tags
+        result = result.replace(/\[color=([a-zA-Z]+|#[0-9a-fA-F]{3,6})\]([\s\S]*?)\[\/color\]/gi, function(match, color, content) {
+            return `<span style="color: ${color};">${content}</span>`;
+        });
+
+        // Parse markdown bold
+        result = result.replace(/\*\*([^*]+)\*\*/g, '<b class="bold-text">$1</b>');
+
+        return result;
+    }
+
+    // --- BUILD TABLE ---
+    function initTable(data) {
+        if (!Array.isArray(data) || data.length === 0) {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+            return;
+        }
+
+        let filteredData = data;
+        const firstRow = data[0];
+        const allHeaders = Object.keys(firstRow);
+        const tableHeaders = allHeaders.filter(h => !CONFIG_COLUMNS.includes(h));
+        const nameCol = tableHeaders[0];
+
+        // Filter by favorites if enabled
+        if (showFavoritesOnly) {
+            filteredData = data.filter(row => favorites.has(row[nameCol]));
+        }
+
+        // Update page config
+        if (firstRow['CONFIG_TITLE']) {
+            $('#pageTitle').text(firstRow['CONFIG_TITLE']);
+            document.title = firstRow['CONFIG_TITLE'];
+        }
+
+        if (firstRow['CONFIG_DATE']) {
+            $('#pageDate').text(firstRow['CONFIG_DATE']);
+        } else {
+            $('#pageDate').text('');
+        }
+
+        const definitionEl = document.getElementById('pageDefinition');
+        if (firstRow['CONFIG_DEFINITION']) {
+            definitionEl.innerHTML = `<p>${parseRichText(firstRow['CONFIG_DEFINITION'])}</p>`;
+            definitionEl.classList.add('visible');
+        } else {
+            definitionEl.classList.remove('visible');
+        }
+
+        // Update PDF buttons
+        if (firstRow['CONFIG_PDF']) {
+            const pdfUrl = getPdfViewUrl(firstRow['CONFIG_PDF']);
+            if (pdfUrl) {
+                $('#pdfButton').attr('href', pdfUrl).show();
+                $('#pdfButtonAlt').attr('href', pdfUrl).show();
+            }
+        }
+
+        // Destroy existing table
+        if ($.fn.dataTable.isDataTable('#dataTable')) {
+            $('#dataTable').DataTable().clear().destroy();
+            $('#dataTable').empty();
+        }
+
+        // Build table HTML
+        let tableHtml = '<thead><tr><th></th>';
+        tableHeaders.forEach(h => { tableHtml += `<th>${h}</th>`; });
+        tableHtml += '</tr></thead><tbody></tbody>';
+        $('#dataTable').html(tableHtml);
+
+        // Build columns config
+        const columnsConfig = [
+            {
+                data: null,
+                orderable: false,
+                render: (d, type, row) => {
+                    const name = row[nameCol] || '';
+                    const isFav = favorites.has(name);
+                    return `<button class="fav-btn ${isFav ? 'active' : ''}" data-name="${name.replace(/"/g, '&quot;')}" onclick="toggleFavorite('${name.replace(/'/g, "\\'")}')">
+                        <span class="material-icons">${isFav ? 'favorite' : 'favorite_border'}</span>
+                    </button>`;
+                }
+            },
+            ...tableHeaders.map(key => ({
+                data: key,
+                render: (data, type, row) => {
+                    if (!data) return "";
+                    let rawVal = data.toString();
+                    let imgUrl = getImageUrl(rawVal);
+                    if (imgUrl) return `<img src="${imgUrl}" class="table-img" onclick="zoomImage('${imgUrl}')" onerror="this.outerHTML='<span class=\\'img-error\\'>Image Error</span>'" alt="Medication">`;
+                    if (rawVal.toLowerCase() === 'no image') return `<span class="no-image">No Image</span>`;
+                    return parseRichText(rawVal);
+                }
+            }))
+        ];
+
+        // Initialize DataTable
+        dataTable = $('#dataTable').DataTable({
+            data: filteredData,
+            columns: columnsConfig,
+            dom: 't',
+            paging: false,
+            info: false,
+            ordering: true,
+            searching: true,
+            order: [],
+            language: {
+                emptyTable: showFavoritesOnly ? 'No favorites yet. Click the heart icon to add some!' : 'No medications found',
+                zeroRecords: 'No matching medications found'
+            },
+            initComplete: function() {
+                const currentSearch = $('#customSearch').val();
+                if (currentSearch) this.api().search(currentSearch).draw();
+            }
+        });
+
+        // Show table container
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'none';
+        document.getElementById('tableContainer').style.display = 'block';
+        document.getElementById('refreshBtn').classList.remove('spin');
+    }
+
+    // --- CARDS VIEW ---
+    function renderCards(data) {
+        if (!Array.isArray(data) || data.length === 0) {
+            document.getElementById('cardsContainer').innerHTML = '<p style="color: var(--fg-muted); text-align: center; padding: 2.5rem;">No data available</p>';
+            return;
+        }
+
+        const firstRow = data[0];
+        const allHeaders = Object.keys(firstRow);
+        const tableHeaders = allHeaders.filter(h => !CONFIG_COLUMNS.includes(h));
+        const nameCol = tableHeaders[0];
+
+        let filteredData = data;
+        if (showFavoritesOnly) {
+            filteredData = data.filter(row => favorites.has(row[nameCol]));
+        }
+
+        // Apply search filter
+        const searchTerm = $('#customSearch').val().toLowerCase();
+        if (searchTerm) {
+            filteredData = filteredData.filter(row =>
+                tableHeaders.some(h => row[h] && row[h].toString().toLowerCase().includes(searchTerm))
+            );
+        }
+
+        if (filteredData.length === 0) {
+            document.getElementById('cardsContainer').innerHTML = `<p style="color: var(--fg-muted); text-align: center; padding: 2.5rem;">${showFavoritesOnly ? 'No favorites yet. Click the heart icon to add some!' : 'No matching medications found'}</p>`;
+            return;
+        }
+
+        let html = '';
+        filteredData.forEach(row => {
+            const name = row[nameCol] || 'Unknown';
+            const isFav = favorites.has(name);
+
+            // Find image
+            let imgUrl = null, imgCol = null;
+            for (const h of tableHeaders) {
+                if (row[h]) {
+                    const url = getImageUrl(row[h].toString());
+                    if (url) { imgUrl = url; imgCol = h; break; }
+                }
+            }
+
+            html += `<div class="med-card">
+                <div class="card-header">
+                    ${imgUrl ? `<img src="${imgUrl}" class="card-img" onclick="zoomImage('${imgUrl}')" alt="${name}">` : `<div class="card-img" style="display: flex; align-items: center; justify-content: center; color: var(--fg-muted); font-size: var(--text-xs);">No image</div>`}
+                    <div class="card-title-section">
+                        <h3 class="card-title">${parseRichText(name)}</h3>
+                    </div>
+                    <button class="card-fav-btn ${isFav ? 'active' : ''}" data-name="${name.replace(/"/g, '&quot;')}" onclick="toggleFavorite('${name.replace(/'/g, "\\'")}')">
+                        <span class="material-icons">${isFav ? 'favorite' : 'favorite_border'}</span>
+                    </button>
+                </div>
+                <div class="card-body">`;
+
+            tableHeaders.forEach(h => {
+                if (h === nameCol || h === imgCol) return;
+                let val = row[h];
+                if (!val) return;
+                const valStr = val.toString();
+                if (valStr.toLowerCase() === 'no image' || getImageUrl(valStr)) return;
+
+                html += `<div class="card-field">
+                    <div class="card-field-label">${h}</div>
+                    <div class="card-field-value">${parseRichText(valStr)}</div>
+                </div>`;
+            });
+
+            html += `</div></div>`;
+        });
+
+        document.getElementById('cardsContainer').innerHTML = html;
+    }
+
+    // --- VIEW SWITCHING ---
+    function switchView(view) {
+        currentView = view;
+
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.view === view);
+        });
+
+        const tableContainer = document.getElementById('tableContainer');
+        const cardsContainer = document.getElementById('cardsContainer');
+
+        if (view === 'table') {
+            tableContainer.style.display = 'block';
+            cardsContainer.style.display = 'none';
+        } else {
+            tableContainer.style.display = 'none';
+            cardsContainer.style.display = 'grid';
+        }
+
+        renderView();
+    }
+
+    function renderView() {
+        const cachedRaw = localStorage.getItem(CACHE_KEY);
+        if (!cachedRaw) return;
+
+        try {
+            const cached = JSON.parse(cachedRaw);
+            const data = cached.data;
+
+            if (currentView === 'table') {
+                initTable(data);
+            } else {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'none';
+                renderCards(data);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    // --- MODAL ---
+    function zoomImage(src) {
+        const modal = document.getElementById('imgModal');
+        const modalImg = document.getElementById('modalImg');
+        modal.classList.add('active');
+        modalImg.src = src;
+    }
+
+    function closeModal() {
+        document.getElementById('imgModal').classList.remove('active');
+    }
+
+    // --- DATA FETCHING ---
+    async function fetchSheetData(force = false) {
+        const now = Date.now();
+        const cachedRaw = localStorage.getItem(CACHE_KEY);
+        let cachedData = null;
+
+        if (cachedRaw && !force) {
+            try {
+                cachedData = JSON.parse(cachedRaw).data;
+                lastRefreshTime = JSON.parse(cachedRaw).timestamp;
+                updateFreshness();
+
+                if (currentView === 'table') {
+                    initTable(cachedData);
+                } else {
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('errorState').style.display = 'none';
+                    renderCards(cachedData);
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        if (force) {
+            document.getElementById('refreshBtn').classList.add('spin');
+            if (!cachedData) {
+                document.getElementById('loadingState').style.display = 'block';
+                document.getElementById('tableContainer').style.display = 'none';
+                document.getElementById('cardsContainer').style.display = 'none';
+            }
+        }
+
+        const url = CSV_URL + '?t=' + now;
+
+        try {
+            const response = await fetch(url);
+            const csvText = await response.text();
+            const result = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+            const data = result.data;
+
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data: data }));
+            lastRefreshTime = now;
+            updateFreshness();
+
+            if (currentView === 'table') {
+                initTable(data);
+            } else {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'none';
+                document.getElementById('cardsContainer').style.display = 'grid';
+                renderCards(data);
+            }
+
+        } catch (error) {
+            console.error('Network Error:', error);
+            if (!cachedData) {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'block';
+            }
+            document.getElementById('refreshBtn').classList.remove('spin');
+        }
+    }
+
+    function forceRefresh() {
+        fetchSheetData(true);
+    }
+
+    // --- PULL TO REFRESH ---
+    function setupPullToRefresh() {
+        let startY = 0, pulling = false;
+        const indicator = document.getElementById('pullIndicator');
+
+        document.addEventListener('touchstart', e => {
+            if (window.scrollY === 0) {
+                startY = e.touches[0].pageY;
+                pulling = true;
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchmove', e => {
+            if (!pulling) return;
+            const diff = e.touches[0].pageY - startY;
+            indicator.classList.toggle('visible', diff > 80 && window.scrollY === 0);
+        }, { passive: true });
+
+        document.addEventListener('touchend', () => {
+            if (indicator.classList.contains('visible')) forceRefresh();
+            indicator.classList.remove('visible');
+            pulling = false;
+        }, { passive: true });
+    }
+
+    // --- AUTO REFRESH ---
+    function setupAutoRefresh() {
+        setInterval(updateFreshness, 60000);
+        setInterval(() => fetchSheetData(false), 300000);
+    }
+
+    // --- KEYBOARD SHORTCUTS ---
+    function setupKeyboardShortcuts() {
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeModal();
+        });
+    }
+
+    // --- DOCUMENT READY ---
+    $(document).ready(function() {
+        init();
+
+        // Search handler
+        $('#customSearch').on('keyup clear', function() {
+            if (currentView === 'table' && $.fn.dataTable.isDataTable('#dataTable')) {
+                $('#dataTable').DataTable().search($(this).val()).draw();
+            } else if (currentView === 'cards') {
+                renderView();
+            }
+        });
+    });
+</script>
+</body>
+</html>
