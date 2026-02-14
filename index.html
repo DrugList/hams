@@ -388,18 +388,18 @@
             transition: background 0.3s ease;
         }
 
-        /* Favorite Column (1st) */
+        /* Favorite Column (1st) - Shrink to Fit Content */
         #dataTable th:first-child { 
             border-radius: 0; 
-            width: 50px; 
-            text-align: right; /* Align header right */
-            padding: 1rem 0 1rem 1rem; /* No right padding */
+            width: 1%; /* Forces shrink-to-fit width */
+            text-align: right;
+            padding: 1rem 0 1rem 0.5rem;
         }
         
         /* Name Column (2nd) */
         #dataTable th:nth-child(2) { 
             border-radius: 0.5rem 0 0 0.5rem; 
-            padding-left: 0.25rem; /* Small gap for header text */
+            padding-left: 0.25rem;
         }
         
         #dataTable th:last-child { border-radius: 0 0.5rem 0.5rem 0; }
@@ -419,21 +419,20 @@
         #dataTable tbody tr:hover { background: var(--accent-glow); }
         #dataTable tbody tr:last-child td { border-bottom: none; }
 
-        /* FIX: Tighten Favorite Button and Name Columns */
-        /* 1. Favorite Column: Align Right, No Right Padding */
+        /* FIX: Tighten Favorite Button Column */
         #dataTable td:first-child { 
             text-align: right; 
-            padding: 0.5rem 0 0.5rem 0.5rem; /* Right padding is 0 */
-            width: 50px;
+            padding: 0.5rem 0 0.5rem 0.5rem; /* Minimal padding */
+            width: 1%; /* Forces shrink-to-fit width */
         }
 
-        /* 2. Name Column: Shrink to fit, minimal left padding */
+        /* Name Column: Shrink to fit */
         #dataTable td:nth-child(2) {
             width: 1%;           
             white-space: nowrap; 
             font-weight: 700;
             color: var(--accent);
-            padding-left: 0.125rem; /* Very small gap between button and text */
+            padding-left: 0.125rem;
         }
 
         /* Image Column */
@@ -447,7 +446,7 @@
             padding: 0.25rem;
             color: var(--fg-muted);
             transition: all 0.2s ease;
-            display: inline-flex; /* Use inline-flex to behave like text/image */
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
