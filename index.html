@@ -388,17 +388,11 @@
             transition: background 0.3s ease;
         }
 
-        /* Favorite Column Header - Match referenced style */
+        /* Favorite Column Header - tight width */
         #dataTable th:first-child { 
             border-radius: 0.5rem 0 0 0.5rem;
-            width: auto;
-            text-align: center;
-            padding: 1rem 0.75rem;
-        }
-        
-        /* Name Column (2nd) */
-        #dataTable th:nth-child(2) { 
-            padding-left: 0.25rem;
+            width: 1%;
+            padding: 1rem 0.5rem;
         }
         
         #dataTable th:last-child { border-radius: 0 0.5rem 0.5rem 0; }
@@ -418,25 +412,23 @@
         #dataTable tbody tr:hover { background: var(--accent-glow); }
         #dataTable tbody tr:last-child td { border-bottom: none; }
 
-        /* Favorite Column - Match referenced style */
+        /* Favorite Column - tight width */
         #dataTable td:first-child { 
-            font-weight: 600;
-            color: var(--accent);
+            width: 1%;
+            padding: 0.5rem;
         }
 
-        /* Name Column: Shrink to fit */
+        /* Name Column */
         #dataTable td:nth-child(2) {
-            width: 1%;           
             white-space: nowrap; 
             font-weight: 700;
             color: var(--accent);
-            padding-left: 0.125rem;
         }
 
         /* Image Column */
         #dataTable td:nth-child(3) { width: 90px; white-space: nowrap; padding-left: 5px; }
 
-        /* Favorite Button - Match referenced style exactly */
+        /* Favorite Button - match referenced exactly */
         .fav-btn {
             background: none;
             border: none;
@@ -520,7 +512,6 @@
             padding: 0.25rem;
             color: var(--fg-muted);
             transition: all 0.2s ease;
-            border-radius: 50%;
         }
 
         .card-fav-btn:hover { transform: scale(1.2); }
