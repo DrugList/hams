@@ -388,8 +388,17 @@
             transition: background 0.3s ease;
         }
 
-        #dataTable th:first-child { border-radius: 0; width: 40px; text-align: center; }
-        #dataTable th:nth-child(2) { border-radius: 0.5rem 0 0 0.5rem; }
+        /* Fix header alignment */
+        #dataTable th:first-child { 
+            border-radius: 0; 
+            width: 40px; 
+            text-align: center; 
+            padding: 1rem 0 1rem 1rem; /* Tighten right padding */
+        }
+        #dataTable th:nth-child(2) { 
+            border-radius: 0.5rem 0 0 0.5rem; 
+            padding-left: 0.25rem; /* Tighten left padding */
+        }
         #dataTable th:last-child { border-radius: 0 0.5rem 0.5rem 0; }
 
         #dataTable td {
@@ -407,15 +416,19 @@
         #dataTable tbody tr:hover { background: var(--accent-glow); }
         #dataTable tbody tr:last-child td { border-bottom: none; }
 
-        #dataTable td:first-child { text-align: center; padding: 0.5rem; }
+        /* FIX: Tighten Favorite Button and Name Columns */
+        #dataTable td:first-child { 
+            text-align: center; 
+            padding: 0.5rem 0 0.5rem 0.5rem; /* Remove right padding */
+        }
 
-        /* FIX: Tighten Name Column to reduce gap to image */
         #dataTable th:nth-child(2),
         #dataTable td:nth-child(2) {
-            width: 1%;           /* Shrink to fit content */
-            white-space: nowrap; /* Prevent wrapping to keep names on one line */
+            width: 1%;           
+            white-space: nowrap; 
             font-weight: 700;
             color: var(--accent);
+            padding-left: 0.25rem; /* Reduce left padding to bring text closer to fav button */
         }
 
         /* Image Column */
@@ -621,7 +634,7 @@
             .table-img { width: 60px; height: 60px; }
             #dataTable td:nth-child(3), #dataTable th:nth-child(3) { width: 70px !important; }
 
-            /* Allow name to wrap on mobile if needed, but keep tight */
+            /* Allow name to wrap on mobile if needed */
             #dataTable td:nth-child(2), #dataTable th:nth-child(2) { white-space: normal; }
 
             .scroll-hint { display: block; }
@@ -660,7 +673,7 @@
                 <h1 id="pageTitle">HIGH ALERT MEDICATIONS</h1>
             </div>
         </div>
-        <!-- NEW: Wrapped buttons and meta in a group for vertical stacking -->
+        <!-- Wrapped buttons and meta in a group for vertical stacking -->
         <div class="action-group">
             <div class="header-actions">
                 <button class="header-btn header-btn-icon" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark/light mode">
@@ -678,7 +691,7 @@
                     PDF
                 </a>
             </div>
-            <!-- NEW: Moved Date/Meta here, below buttons -->
+            <!-- Moved Date/Meta here, below buttons -->
             <div class="page-meta">
                 <span id="pageDate"></span>
                 <span class="freshness-badge" id="freshnessBadge">Loading...</span>
@@ -708,7 +721,6 @@
                 </button>
             </div>
 
-            <!-- REMOVED "Muat turun:" label -->
             <div class="download-group">
                 <a id="pdfButtonAlt" href="#" target="_blank" class="header-btn" style="display: none;">
                     <span class="material-icons">picture_as_pdf</span>
@@ -758,7 +770,7 @@
     const SHEET_ID = '1J0kxAA9hRf0kGI4SnUUPr_R7Y1PCGXEMBabkxTcSE8M';
     const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 
-    const CACHE_KEY = 'medAppCache_v11'; // Incremented cache key slightly just in case
+    const CACHE_KEY = 'medAppCache_v11';
     const CONFIG_COLUMNS = ['CONFIG_TITLE', 'CONFIG_PDF', 'CONFIG_DATE', 'CONFIG_DEFINITION'];
     const FAVORITES_KEY = 'medApp_favorites';
     const THEME_KEY = 'medApp_theme';
