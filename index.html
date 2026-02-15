@@ -5,12 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#d32f2f">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="High Alert Meds">
+    <meta name="description" content="High Alert Medications Reference Guide">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json,{
+        %22name%22:%22High%20Alert%20Medications%22,
+        %22short_name%22:%22High%20Alert%20Meds%22,
+        %22description%22:%22High%20Alert%20Medications%20Reference%20Guide%22,
+        %22start_url%22:%22.%22,
+        %22display%22:%22standalone%22,
+        %22background_color%22:%22%23f4f4f9%22,
+        %22theme_color%22:%22%23d32f2f%22,
+        %22orientation%22:%22portrait-primary%22,
+        %22icons%22:[
+            {%22src%22:%22data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20512%20512%27%3E%3Crect%20fill%3D%27%23d32f2f%27%20width%3D%27512%27%20height%3D%27512%27%20rx%3D%2764%27%2F%3E%3Cpath%20fill%3D%27white%27%20d%3D%27M256%2080c-97.2%200-176%2078.8-176%20176s78.8%20176%20176%20176%20176-78.8%20176-176-78.8-176-176-176zm0%20304c-70.7%200-128-57.3-128-128s57.3-128%20128-128%20128%2057.3%20128%20128-57.3%20128-128%20128zm-32-192v128l96-64-96-64z%27%2F%3E%3C%2Fsvg%3E%22,%22sizes%22:%22512x512%22,%22type%22:%22image/svg+xml%22}
+        ]
+    }">
+    
     <title>High Alert Medications</title>
+    
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
     <style>
         html {
             font-size: 16px;
@@ -32,6 +53,7 @@
             --shadow: rgba(0, 0, 0, 0.1);
             --danger: #ef4444;
             --heart: #f43f5e;
+            --success: #10b981;
             --text-xs: 0.75rem;
             --text-sm: 0.875rem;
             --text-base: 1rem;
@@ -65,6 +87,36 @@
             font-size: var(--text-base);
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
+        }
+
+        /* Offline Indicator */
+        .offline-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 0.625rem 1rem;
+            text-align: center;
+            font-size: var(--text-sm);
+            font-weight: 600;
+            z-index: 2000;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .offline-banner.visible {
+            transform: translateY(0);
+        }
+
+        .offline-banner .material-icons {
+            font-size: 1.125rem;
         }
 
         /* Pull to Refresh Indicator */
@@ -169,6 +221,27 @@
             border-color: rgba(76, 175, 80, 0.5);
         }
 
+        /* Offline status badge */
+        .offline-badge {
+            font-size: var(--text-xs);
+            padding: 0.1875rem 0.5rem;
+            border-radius: 0.375rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: none;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .offline-badge.visible {
+            display: inline-flex;
+        }
+
+        .offline-badge .material-icons {
+            font-size: 0.875rem;
+        }
+
         .header-actions {
             display: flex;
             align-items: center;
@@ -177,7 +250,6 @@
             justify-content: flex-end;
         }
 
-        /* Container to hold buttons and date vertically */
         .action-group {
             display: flex;
             flex-direction: column;
@@ -388,7 +460,6 @@
             transition: background 0.3s ease;
         }
 
-        /* Favorite Column Header - tight width */
         #dataTable th:first-child { 
             border-radius: 0.5rem 0 0 0.5rem;
             width: 1%;
@@ -412,13 +483,11 @@
         #dataTable tbody tr:hover { background: var(--accent-glow); }
         #dataTable tbody tr:last-child td { border-bottom: none; }
 
-        /* Favorite Column - tight width */
         #dataTable td:first-child { 
             width: 1%;
             padding: 0.5rem;
         }
 
-        /* Name Column - Shrink to fit longest name */
         #dataTable th:nth-child(2),
         #dataTable td:nth-child(2) {
             width: 1%;
@@ -427,7 +496,6 @@
             color: var(--accent);
         }
 
-        /* Image Column - Fixed width */
         #dataTable th:nth-child(3),
         #dataTable td:nth-child(3) {
             width: 90px; 
@@ -435,7 +503,6 @@
             padding-left: 5px;
         }
 
-        /* Favorite Button - match referenced exactly */
         .fav-btn {
             background: none;
             border: none;
@@ -452,7 +519,6 @@
         .fav-btn.active { color: var(--heart); }
         .fav-btn .material-icons { font-size: 1.375rem; }
 
-        /* Image Styling */
         .table-img {
             width: 80px;
             height: 80px;
@@ -601,7 +667,7 @@
             html { font-size: 12pt; }
             body { background: white !important; color: black !important; }
             .app-header { background: #d32f2f !important; box-shadow: none; position: relative; }
-            .header-actions, .view-toggles, .fav-btn, .header-btn, .cards-container, .scroll-hint { display: none !important; }
+            .header-actions, .view-toggles, .fav-btn, .header-btn, .cards-container, .scroll-hint, .offline-banner { display: none !important; }
             .container { padding: 0; max-width: none; }
             .main-content { border: none; box-shadow: none; border-radius: 0; }
             #dataTable th, #dataTable td { border: 1px solid #ccc; padding: 0.5rem; color: black; font-size: 10pt; }
@@ -614,10 +680,10 @@
 
         /* --- RESPONSIVE FIX FOR MOBILE DEVICES --- */
         @media (max-width: 768px) {
+            .offline-banner { padding-top: calc(0.625rem + env(safe-area-inset-top, 0px)); }
             .app-header { padding: 0.75rem 1rem; }
             .header-top { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
             
-            /* Mobile Adjustments for Date Position */
             .header-content { width: 100%; }
             .action-group { width: 100%; flex-direction: column; align-items: flex-start; margin-top: 0.5rem; }
             .header-actions { justify-content: flex-start; width: 100%; }
@@ -632,7 +698,6 @@
 
             .table-img { width: 60px; height: 60px; }
 
-            /* Allow name to wrap on mobile if needed */
             #dataTable th:nth-child(2),
             #dataTable td:nth-child(2) { 
                 white-space: normal; 
@@ -660,6 +725,12 @@
 </head>
 <body>
 
+<!-- Offline Banner -->
+<div class="offline-banner" id="offlineBanner">
+    <span class="material-icons">cloud_off</span>
+    <span>You're offline. Showing cached data.</span>
+</div>
+
 <div class="pull-indicator" id="pullIndicator">
     <span class="material-icons">refresh</span>
     <span>Release to refresh</span>
@@ -675,7 +746,6 @@
                 <h1 id="pageTitle">HIGH ALERT MEDICATIONS</h1>
             </div>
         </div>
-        <!-- Wrapped buttons and meta in a group for vertical stacking -->
         <div class="action-group">
             <div class="header-actions">
                 <button class="header-btn header-btn-icon" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark/light mode">
@@ -693,10 +763,13 @@
                     PDF
                 </a>
             </div>
-            <!-- Moved Date/Meta here, below buttons -->
             <div class="page-meta">
                 <span id="pageDate"></span>
                 <span class="freshness-badge" id="freshnessBadge">Loading...</span>
+                <span class="offline-badge" id="offlineBadge">
+                    <span class="material-icons">cloud_off</span>
+                    Offline
+                </span>
             </div>
         </div>
     </div>
@@ -772,25 +845,168 @@
     const SHEET_ID = '1J0kxAA9hRf0kGI4SnUUPr_R7Y1PCGXEMBabkxTcSE8M';
     const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 
-    const CACHE_KEY = 'medAppCache_v11';
+    const CACHE_KEY = 'medAppCache_v12';
     const CONFIG_COLUMNS = ['CONFIG_TITLE', 'CONFIG_PDF', 'CONFIG_DATE', 'CONFIG_DEFINITION'];
     const FAVORITES_KEY = 'medApp_favorites';
     const THEME_KEY = 'medApp_theme';
+    const OFFLINE_CACHE_KEY = 'medApp_offlineAssets';
 
     let dataTable;
     let currentView = 'table';
     let favorites = new Set();
     let showFavoritesOnly = false;
     let lastRefreshTime = null;
+    let isOnline = navigator.onLine;
+
+    // --- SERVICE WORKER REGISTRATION ---
+    async function registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            try {
+                // Create service worker as a blob
+                const swCode = `
+                    const CACHE_NAME = 'high-alert-meds-v1';
+                    const ASSETS_TO_CACHE = [
+                        'https://code.jquery.com/jquery-3.7.0.min.js',
+                        'https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js',
+                        'https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css',
+                        'https://fonts.googleapis.com/icon?family=Material+Icons',
+                        'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap',
+                        'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js'
+                    ];
+
+                    self.addEventListener('install', (event) => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME).then((cache) => {
+                                return cache.addAll(ASSETS_TO_CACHE).catch(err => {
+                                    console.log('Failed to cache some assets:', err);
+                                });
+                            })
+                        );
+                        self.skipWaiting();
+                    });
+
+                    self.addEventListener('activate', (event) => {
+                        event.waitUntil(
+                            caches.keys().then((cacheNames) => {
+                                return Promise.all(
+                                    cacheNames
+                                        .filter((name) => name !== CACHE_NAME)
+                                        .map((name) => caches.delete(name))
+                                );
+                            })
+                        );
+                        self.clients.claim();
+                    });
+
+                    self.addEventListener('fetch', (event) => {
+                        const url = new URL(event.request.url);
+                        
+                        // Skip non-GET requests
+                        if (event.request.method !== 'GET') return;
+                        
+                        // Handle Google Sheets requests - network first, fallback to cache
+                        if (url.hostname.includes('google.com') && url.pathname.includes('spreadsheets')) {
+                            event.respondWith(
+                                fetch(event.request)
+                                    .then((response) => {
+                                        const responseClone = response.clone();
+                                        caches.open(CACHE_NAME).then((cache) => {
+                                            cache.put(event.request, responseClone);
+                                        });
+                                        return response;
+                                    })
+                                    .catch(() => {
+                                        return caches.match(event.request);
+                                    })
+                            );
+                            return;
+                        }
+                        
+                        // For other requests - cache first, fallback to network
+                        event.respondWith(
+                            caches.match(event.request).then((cachedResponse) => {
+                                if (cachedResponse) {
+                                    // Update cache in background
+                                    fetch(event.request).then((response) => {
+                                        if (response.ok) {
+                                            caches.open(CACHE_NAME).then((cache) => {
+                                                cache.put(event.request, response);
+                                            });
+                                        }
+                                    }).catch(() => {});
+                                    return cachedResponse;
+                                }
+                                return fetch(event.request).then((response) => {
+                                    if (response.ok) {
+                                        const responseClone = response.clone();
+                                        caches.open(CACHE_NAME).then((cache) => {
+                                            cache.put(event.request, responseClone);
+                                        });
+                                    }
+                                    return response;
+                                });
+                            })
+                        );
+                    });
+                `;
+
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                const registration = await navigator.serviceWorker.register(swUrl, {
+                    scope: './'
+                });
+                
+                console.log('Service Worker registered successfully');
+                
+                // Clean up blob URL after registration
+                setTimeout(() => URL.revokeObjectURL(swUrl), 60000);
+                
+            } catch (error) {
+                console.log('Service Worker registration failed:', error);
+            }
+        }
+    }
 
     // --- INITIALIZATION ---
     function init() {
         loadTheme();
         loadFavorites();
+        setupOfflineDetection();
         fetchSheetData();
         setupPullToRefresh();
         setupAutoRefresh();
         setupKeyboardShortcuts();
+        registerServiceWorker();
+    }
+
+    // --- OFFLINE DETECTION ---
+    function setupOfflineDetection() {
+        const banner = document.getElementById('offlineBanner');
+        const badge = document.getElementById('offlineBadge');
+
+        function updateOnlineStatus() {
+            isOnline = navigator.onLine;
+            
+            if (isOnline) {
+                banner.classList.remove('visible');
+                badge.classList.remove('visible');
+            } else {
+                banner.classList.add('visible');
+                badge.classList.add('visible');
+            }
+        }
+
+        window.addEventListener('online', () => {
+            updateOnlineStatus();
+            // Try to refresh data when coming back online
+            fetchSheetData(false);
+        });
+        
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        // Initial check
+        updateOnlineStatus();
     }
 
     // --- THEME SYSTEM ---
@@ -1172,6 +1388,7 @@
         const cachedRaw = localStorage.getItem(CACHE_KEY);
         let cachedData = null;
 
+        // Show cached data first if available
         if (cachedRaw && !force) {
             try {
                 cachedData = JSON.parse(cachedRaw).data;
@@ -1186,6 +1403,16 @@
                     renderCards(cachedData);
                 }
             } catch (e) { console.error(e); }
+        }
+
+        // If offline, don't try to fetch
+        if (!navigator.onLine && !force) {
+            if (!cachedData) {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'block';
+                document.querySelector('.error-state p').textContent = 'No cached data available. Please connect to the internet.';
+            }
+            return;
         }
 
         if (force) {
@@ -1223,12 +1450,19 @@
             if (!cachedData) {
                 document.getElementById('loadingState').style.display = 'none';
                 document.getElementById('errorState').style.display = 'block';
+                document.querySelector('.error-state p').textContent = 'Please check your connection and try again.';
             }
             document.getElementById('refreshBtn').classList.remove('spin');
         }
     }
 
-    function forceRefresh() { fetchSheetData(true); }
+    function forceRefresh() { 
+        if (!navigator.onLine) {
+            alert('You are offline. Please connect to the internet to refresh data.');
+            return;
+        }
+        fetchSheetData(true); 
+    }
 
     // --- PULL TO REFRESH ---
     function setupPullToRefresh() {
@@ -1255,12 +1489,17 @@
     // --- AUTO REFRESH ---
     function setupAutoRefresh() {
         setInterval(updateFreshness, 60000);
-        setInterval(() => fetchSheetData(false), 300000);
+        // Only auto-refresh if online
+        setInterval(() => {
+            if (navigator.onLine) fetchSheetData(false);
+        }, 300000);
     }
 
     // --- KEYBOARD SHORTCUTS ---
     function setupKeyboardShortcuts() {
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+        document.addEventListener('keydown', e => { 
+            if (e.key === 'Escape') closeModal(); 
+        });
     }
 
     // --- DOCUMENT READY ---
